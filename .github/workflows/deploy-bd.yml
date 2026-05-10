@@ -1,4 +1,4 @@
-name: BD Deploy
+name: DB Deploy
 
 on:
   push:
@@ -6,17 +6,16 @@ on:
       - deploy
     paths:
       - 'bd/**'
-  workflow_dispatch:
 
 jobs:
-  backend:
+  deploy:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout
+      - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Configure AWS
+      - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
@@ -24,14 +23,39 @@ jobs:
           aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
           aws-region: ${{ secrets.AWS_REGION }}
 
-      - name: Login ECR
+      - name: Login to Amazon ECR
+        id: login-ecr
         uses: aws-actions/amazon-ecr-login@v2
 
-      - name: Build bd Image
+      - name: Build BD Docker Image
         run: |
           docker build -t bd ./bd
-          docker tag bd:latest ${{ secrets.ECR_REPO_URL_DB }}:latest
+          docker tag db:latest ${{ secrets.ECR_REPO_URL_DB }}:latest
 
-      - name: Push bd Image
+      - name: Push BD Image to ECR
         run: |
           docker push ${{ secrets.ECR_REPO_URL_DB }}:latest
+
+      - name: Create SSH Key
+        run: |
+          echo "${{ secrets.EC2_SSH_KEY }}" > key.pem
+          chmod 400 key.pem
+
+      - name: Deploy BD to Private EC2
+        run: |
+          ssh -o StrictHostKeyChecking=no \
+          -i key.pem \
+          ec2-user@${{ secrets.EC2_FRONTEND_PUBLIC_IP }} \
+          "ssh -o StrictHostKeyChecking=no \
+          -i ~/DevOps.pem \
+          ec2-user@${{ secrets.EC2_DB_PRIVATE_IP }} \
+          'aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 089485767547.dkr.ecr.us-east-1.amazonaws.com && \
+          docker pull ${{ secrets.ECR_REPO_URL_DB }}:latest && \
+          docker rm -f bd || true && \
+          docker run -d \
+          -p 3306:3306 \
+          -v mysql_data:/var/lib/mysql \
+          --name bd \
+          -e MYSQL_ROOT_PASSWORD=root_secret \
+          -e MYSQL_DATABASE=innovatech_ops \
+          ${{ secrets.ECR_REPO_URL_DB }}:latest'"
