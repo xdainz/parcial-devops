@@ -1,4 +1,4 @@
-name: Backend Deploy
+name: Frontend Deploy
 
 on:
   push:
@@ -6,6 +6,7 @@ on:
       - deploy
     paths:
       - 'frontend/**'
+  workflow_dispatch:
 
 jobs:
   backend:
