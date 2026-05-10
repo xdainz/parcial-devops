@@ -6,17 +6,16 @@ on:
       - deploy
     paths:
       - 'frontend/**'
-  workflow_dispatch:
 
 jobs:
-  backend:
+  deploy:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout
+      - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Configure AWS
+      - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
@@ -24,14 +23,33 @@ jobs:
           aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
           aws-region: ${{ secrets.AWS_REGION }}
 
-      - name: Login ECR
+      - name: Login to Amazon ECR
+        id: login-ecr
         uses: aws-actions/amazon-ecr-login@v2
 
-      - name: Build Frontend Image
+      - name: Build Frontend Docker Image
         run: |
           docker build -t frontend ./frontend
           docker tag frontend:latest ${{ secrets.ECR_REPO_URL_FRONTEND }}:latest
 
-      - name: Push Frontend Image
+      - name: Push Frontend Image to ECR
         run: |
           docker push ${{ secrets.ECR_REPO_URL_FRONTEND }}:latest
+
+      - name: Create SSH Key
+        run: |
+          echo "${{ secrets.EC2_SSH_KEY }}" > key.pem
+          chmod 400 key.pem
+
+      - name: Deploy Frontend to EC2
+        run: |
+          ssh -o StrictHostKeyChecking=no \
+          -i key.pem \
+          ec2-user@${{ secrets.EC2_FRONTEND_PUBLIC_IP }} \
+          'aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 089485767547.dkr.ecr.us-east-1.amazonaws.com && \
+          docker pull ${{ secrets.ECR_REPO_URL_FRONTEND }}:latest && \
+          docker rm -f frontend || true && \
+          docker run -d \
+          -p 80:80 \
+          --name frontend \
+          ${{ secrets.ECR_REPO_URL_FRONTEND }}:latest'
