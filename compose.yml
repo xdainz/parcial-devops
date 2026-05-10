@@ -19,6 +19,15 @@ services:
 
     backend:
         build: ./backend/.
+        restart: unless-stopped
+        env_file:
+            - ./backend/.env.example
+        environment:
+            DB_HOST: bd
+            CORS_ORIGIN: http://localhost
+        ports:
+            - "3001:3001"
+
 networks:
     innovatech_network:
 
