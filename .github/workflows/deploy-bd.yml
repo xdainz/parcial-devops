@@ -6,6 +6,7 @@ on:
       - deploy
     paths:
       - 'bd/**'
+  workflow_dispatch:
 
 jobs:
   deploy:
