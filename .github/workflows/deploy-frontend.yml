@@ -52,5 +52,6 @@ jobs:
           docker rm -f frontend || true && \
           docker run -d \
           -p 80:80 \
+          -e VITE_API_URL=${{ secrets.EC2_BACKEND_PRIVATE_IP }}:3001
           --name frontend \
           ${{ secrets.ECR_REPO_URL_FRONTEND }}:latest'
