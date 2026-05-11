@@ -54,6 +54,7 @@ jobs:
           docker pull ${{ secrets.ECR_REPO_URL_BACKEND }}:latest && \
           docker rm -f backend || true && \
           docker run -d -p 3001:3001 \
+          -e CORS_ORIGIN=http://98.86.248.55 \
           -e DB_HOST=10.0.9.55 \
           -e DB_PORT=3306 \
           -e DB_NAME=innovatech_ops \
