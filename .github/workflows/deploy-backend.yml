@@ -60,6 +60,6 @@ jobs:
           -e DB_NAME=innovatech_ops \
           -e DB_USER=root \
           -e DB_PASSWORD=root_secret \
-          -e CORS_ORIGIN=http://98.86.248.55 \
+          -e CORS_ORIGIN=http://10.0.0.102 \
           --name backend \
           ${{ secrets.ECR_REPO_URL_BACKEND }}:latest'"
