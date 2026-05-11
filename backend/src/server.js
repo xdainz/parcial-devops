@@ -19,3 +19,5 @@ async function startServer() {
 }
 
 startServer();
+
+// Para manejar errores no capturados        

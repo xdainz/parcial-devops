@@ -26,3 +26,6 @@ Sobre esta carpeta, la dupla debería ser capaz de:
 
 No se entrega `Dockerfile` ni `docker-compose.yml` a propósito.
 La idea es que cada equipo resuelva la contenerización de esta capa según la estrategia que proponga para su despliegue en EC2.
+
+
+hola
