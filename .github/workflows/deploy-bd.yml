@@ -5,7 +5,7 @@ on:
     branches:
       - deploy
     paths:
-      - 'bd/**'
+      - "bd/**"
   workflow_dispatch:
 
 jobs:
@@ -59,4 +59,5 @@ jobs:
           --name bd \
           -e MYSQL_ROOT_PASSWORD=root_secret \
           -e MYSQL_DATABASE=innovatech_ops \
+          --restart unless-stopped \
           ${{ secrets.ECR_REPO_URL_DB }}:latest'"
