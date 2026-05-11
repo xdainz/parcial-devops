@@ -5,7 +5,7 @@ on:
     branches:
       - deploy
     paths:
-      - 'frontend/**'
+      - "frontend/**"
   workflow_dispatch:
 
 jobs:
@@ -30,7 +30,7 @@ jobs:
 
       - name: Build Frontend Docker Image
         run: |
-          docker build -t frontend ./frontend
+          docker build --build-arg VITE_API_URL=http://${{ secrets.EC2_BACKEND_PRIVATE_IP }}:3001 -t frontend ./frontend
           docker tag frontend:latest ${{ secrets.ECR_REPO_URL_FRONTEND }}:latest
 
       - name: Push Frontend Image to ECR
@@ -52,6 +52,5 @@ jobs:
           docker rm -f frontend || true && \
           docker run -d \
           -p 80:80 \
-          -e VITE_API_URL=${{ secrets.EC2_BACKEND_PRIVATE_IP }}:3001 \
           --name frontend \
           ${{ secrets.ECR_REPO_URL_FRONTEND }}:latest'
