@@ -31,7 +31,7 @@ jobs:
       - name: Build BD Docker Image
         run: |
           docker build -t bd ./bd
-          docker tag db:latest ${{ secrets.ECR_REPO_URL_DB }}:latest
+          docker tag bd:latest ${{ secrets.ECR_REPO_URL_DB }}:latest
 
       - name: Push BD Image to ECR
         run: |
