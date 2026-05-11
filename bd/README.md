@@ -1,5 +1,4 @@
 # Base de Datos
-
 Esta carpeta representa la tercera capa de la solución: la base de datos.
 
 Su propósito es dejar explícito que el proyecto está compuesto por tres componentes separados:
