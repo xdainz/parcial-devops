@@ -28,6 +28,12 @@ jobs:
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v2
 
+      - name: Pass env to NGINX
+        env:
+          NGINX_BACKEND_IP: ${ secrets.BACKEND_IP}
+        run: |
+          envsubst '$NGINX_BACKEND_IP' < ./backend/nginx.conf > ./backend/nginx.conf
+
       - name: Build Docker image
         run: |
           docker build -t backend ./backend
@@ -55,12 +61,12 @@ jobs:
           docker rm -f backend || true && \
           docker run -d -p 3001:3001 \
           -e PORT=3001 \
-          -e DB_HOST=10.0.9.55 \
+          -e DB_HOST=${ secrets.RDS_IP } \
           -e DB_PORT=3306 \
-          -e DB_NAME=innovatech_ops \
-          -e DB_USER=root \
-          -e DB_PASSWORD=root_secret \
-          -e CORS_ORIGIN=http://98.86.248.55/ \
+          -e DB_NAME=${ secrets.DB_NAME } \
+          -e DB_USER=${ secrets.DB_USER } \
+          -e DB_PASSWORD=${ secrets.DB_PASSWORD } \
+          -e CORS_ORIGIN=${ secrets.FRONTEND_IP }  \
           --restart unless-stopped \
           --name backend \
           ${{ secrets.ECR_REPO_URL_BACKEND }}:latest'"
