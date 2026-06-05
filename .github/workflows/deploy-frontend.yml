@@ -28,6 +28,12 @@ jobs:
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v2
 
+      - name: Pass env to NGINX
+        env:
+          NGINX_BACKEND_IP: ${ secrets.BACKEND_IP}
+        run: |
+          envsubst '$NGINX_BACKEND_IP' < ./backend/nginx.conf > ./backend/nginx.conf
+
       - name: Build Frontend Docker Image
         run: |
           docker build --build-arg VITE_API_URL=/api -t frontend ./frontend
@@ -37,21 +43,21 @@ jobs:
         run: |
           docker push ${{ secrets.ECR_REPO_URL_FRONTEND }}:latest
 
-      - name: Create SSH Key
-        run: |
-          echo "${{ secrets.EC2_SSH_KEY }}" > key.pem
-          chmod 400 key.pem
+      # - name: Create SSH Key
+      #   run: |
+      #     echo "${{ secrets.EC2_SSH_KEY }}" > key.pem
+      #     chmod 400 key.pem
 
-      - name: Deploy Frontend to EC2
-        run: |
-          ssh -o StrictHostKeyChecking=no \
-          -i key.pem \
-          ec2-user@${{ secrets.EC2_FRONTEND_PUBLIC_IP }} \
-          'aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 089485767547.dkr.ecr.us-east-1.amazonaws.com && \
-          docker pull ${{ secrets.ECR_REPO_URL_FRONTEND }}:latest && \
-          docker rm -f frontend || true && \
-          docker run -d \
-          -p 80:80 \
-          --name frontend \
-          --restart unless-stopped \
-          ${{ secrets.ECR_REPO_URL_FRONTEND }}:latest'
+      # - name: Deploy Frontend to EC2
+      #   run: |
+      #     ssh -o StrictHostKeyChecking=no \
+      #     -i key.pem \
+      #     ec2-user@${{ secrets.EC2_FRONTEND_PUBLIC_IP }} \
+      #     'aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 089485767547.dkr.ecr.us-east-1.amazonaws.com && \
+      #     docker pull ${{ secrets.ECR_REPO_URL_FRONTEND }}:latest && \
+      #     docker rm -f frontend || true && \
+      #     docker run -d \
+      #     -p 80:80 \
+      #     --name frontend \
+      #     --restart unless-stopped \
+      #     ${{ secrets.ECR_REPO_URL_FRONTEND }}:latest'
