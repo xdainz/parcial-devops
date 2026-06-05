@@ -32,7 +32,7 @@ jobs:
         env:
           NGINX_BACKEND_IP: ${ secrets.BACKEND_IP}
         run: |
-          envsubst '$NGINX_BACKEND_IP' < ./backend/nginx.conf > ./backend/nginx.conf
+          envsubst '$NGINX_BACKEND_IP' < ./frontend/nginx.conf > ./frontend/nginx.conf
 
       - name: Build Frontend Docker Image
         run: |
