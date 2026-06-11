@@ -6,7 +6,14 @@ on:
       - deploy
     paths:
       - "frontend/**"
+      - "aws/taskdef-frontend.json"
+      - ".github/workflows/deploy-frontend.yml"
   workflow_dispatch:
+
+env:
+  ECS_CLUSTER: innovatech-cluster
+  ECS_SERVICE: frontend-service
+  TASK_FAMILY: task-frontend
 
 jobs:
   deploy:
@@ -28,12 +35,6 @@ jobs:
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v2
 
-      - name: Pass env to NGINX
-        env:
-          NGINX_BACKEND_IP: ${ secrets.BACKEND_IP}
-        run: |
-          envsubst '$NGINX_BACKEND_IP' < ./frontend/nginx.conf > ./frontend/nginx.conf
-
       - name: Build Frontend Docker Image
         run: |
           docker build --build-arg VITE_API_URL=/api -t frontend ./frontend
@@ -43,21 +44,39 @@ jobs:
         run: |
           docker push ${{ secrets.ECR_REPO_URL_FRONTEND }}:latest
 
-      # - name: Create SSH Key
-      #   run: |
-      #     echo "${{ secrets.EC2_SSH_KEY }}" > key.pem
-      #     chmod 400 key.pem
+      - name: Render ECS task definition
+        env:
+          ECR_REPO_URL_FRONTEND: ${{ secrets.ECR_REPO_URL_FRONTEND }}
+          AWS_REGION: ${{ secrets.AWS_REGION }}
+        run: |
+          export LAB_ROLE_ARN="arn:aws:iam::$(aws sts get-caller-identity --query Account --output text):role/LabRole"
+          envsubst '$ECR_REPO_URL_FRONTEND $AWS_REGION $LAB_ROLE_ARN' \
+            < aws/taskdef-frontend.json > taskdef.json
 
-      # - name: Deploy Frontend to EC2
-      #   run: |
-      #     ssh -o StrictHostKeyChecking=no \
-      #     -i key.pem \
-      #     ec2-user@${{ secrets.EC2_FRONTEND_PUBLIC_IP }} \
-      #     'aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 089485767547.dkr.ecr.us-east-1.amazonaws.com && \
-      #     docker pull ${{ secrets.ECR_REPO_URL_FRONTEND }}:latest && \
-      #     docker rm -f frontend || true && \
-      #     docker run -d \
-      #     -p 80:80 \
-      #     --name frontend \
-      #     --restart unless-stopped \
-      #     ${{ secrets.ECR_REPO_URL_FRONTEND }}:latest'
+      - name: Register task definition
+        run: |
+          aws ecs register-task-definition \
+            --cli-input-json file://taskdef.json \
+            --query 'taskDefinition.{family:family,revision:revision}'
+
+      - name: Deploy to ECS
+        run: |
+          SERVICE_STATUS=$(aws ecs describe-services \
+            --cluster $ECS_CLUSTER \
+            --services $ECS_SERVICE \
+            --query 'services[0].status' --output text 2>/dev/null || echo "MISSING")
+
+          if [ "$SERVICE_STATUS" = "ACTIVE" ]; then
+            aws ecs update-service \
+              --cluster $ECS_CLUSTER \
+              --service $ECS_SERVICE \
+              --task-definition $TASK_FAMILY \
+              --force-new-deployment \
+              --query 'service.{service:serviceName,taskDefinition:taskDefinition}'
+            echo "Waiting for service to stabilize..."
+            aws ecs wait services-stable --cluster $ECS_CLUSTER --services $ECS_SERVICE
+          else
+            echo "Service $ECS_SERVICE does not exist yet."
+            echo "Image was pushed and task definition registered."
+            echo "Create the service following AWS_SETUP.md, then this step will deploy on the next run."
+          fi
