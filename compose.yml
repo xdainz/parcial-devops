@@ -1,21 +1,25 @@
 services:
     frontend:
-        build: ./frontend/.
-        env_file:
-            - ./frontend/.env.example
+        build:
+            context: ./frontend/.
+            args:
+                VITE_API_URL: http://localhost:3001
         ports:
             - "80:80"
+        depends_on:
+            - backend
 
     bd:
-        build: ./bd/.
+        image: mysql
         restart: always
-        env_file:
-            - ./bd/.env.example
-
+        environment:
+            MYSQL_ROOT_PASSWORD: root_secret
+            MYSQL_DATABASE: innovatech_ops
         ports:
             - "3306:3306"
         volumes:
             - db_vol:/var/lib/mysql
+            - ./bd:/docker-entrypoint-initdb.d
 
     backend:
         build: ./backend/.
@@ -27,9 +31,8 @@ services:
             CORS_ORIGIN: http://localhost
         ports:
             - "3001:3001"
-
-networks:
-    innovatech_network:
+        depends_on:
+            - bd
 
 volumes:
     db_vol:
