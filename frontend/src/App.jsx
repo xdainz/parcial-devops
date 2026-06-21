@@ -6,7 +6,7 @@ const emptyItem = {
   category: "",
   stock: 0,
   minimum_stock: 1,
-  location: ""
+  location: "",
 };
 
 const emptyTicket = {
@@ -14,7 +14,7 @@ const emptyTicket = {
   description: "",
   priority: "media",
   status: "abierto",
-  related_item_id: ""
+  related_item_id: "",
 };
 
 function App() {
@@ -40,7 +40,7 @@ function App() {
       const [dashboardData, itemsData, ticketsData] = await Promise.all([
         api.getDashboard(),
         api.getItems(),
-        api.getTickets()
+        api.getTickets(),
       ]);
       setDashboard(dashboardData);
       setItems(itemsData);
@@ -65,7 +65,7 @@ function App() {
       const payload = {
         ...itemForm,
         stock: Number(itemForm.stock),
-        minimum_stock: Number(itemForm.minimum_stock)
+        minimum_stock: Number(itemForm.minimum_stock),
       };
 
       if (editingItemId) {
@@ -93,7 +93,7 @@ function App() {
         ...ticketForm,
         related_item_id: ticketForm.related_item_id
           ? Number(ticketForm.related_item_id)
-          : null
+          : null,
       };
 
       if (editingTicketId) {
@@ -119,7 +119,7 @@ function App() {
       category: item.category,
       stock: item.stock,
       minimum_stock: item.minimum_stock,
-      location: item.location
+      location: item.location,
     });
     resetMessages();
   }
@@ -131,7 +131,7 @@ function App() {
       description: ticket.description,
       priority: ticket.priority,
       status: ticket.status,
-      related_item_id: ticket.related_item_id || ""
+      related_item_id: ticket.related_item_id || "",
     });
     resetMessages();
   }
@@ -185,7 +185,10 @@ function App() {
         <MetricCard label="Productos" value={dashboard?.totalItems ?? 0} />
         <MetricCard label="Stock bajo" value={dashboard?.lowStockItems ?? 0} />
         <MetricCard label="Tickets" value={dashboard?.totalTickets ?? 0} />
-        <MetricCard label="Tickets abiertos" value={dashboard?.openTickets ?? 0} />
+        <MetricCard
+          label="Tickets abiertos"
+          value={dashboard?.openTickets ?? 0}
+        />
       </section>
 
       <section className="grid">
@@ -198,13 +201,17 @@ function App() {
           <form className="form" onSubmit={handleItemSubmit}>
             <input
               value={itemForm.name}
-              onChange={(event) => setItemForm({ ...itemForm, name: event.target.value })}
+              onChange={(event) =>
+                setItemForm({ ...itemForm, name: event.target.value })
+              }
               placeholder="Nombre del producto"
               required
             />
             <input
               value={itemForm.category}
-              onChange={(event) => setItemForm({ ...itemForm, category: event.target.value })}
+              onChange={(event) =>
+                setItemForm({ ...itemForm, category: event.target.value })
+              }
               placeholder="Categoria"
               required
             />
@@ -212,7 +219,9 @@ function App() {
               type="number"
               min="0"
               value={itemForm.stock}
-              onChange={(event) => setItemForm({ ...itemForm, stock: event.target.value })}
+              onChange={(event) =>
+                setItemForm({ ...itemForm, stock: event.target.value })
+              }
               placeholder="Stock actual"
               required
             />
@@ -220,13 +229,17 @@ function App() {
               type="number"
               min="1"
               value={itemForm.minimum_stock}
-              onChange={(event) => setItemForm({ ...itemForm, minimum_stock: event.target.value })}
+              onChange={(event) =>
+                setItemForm({ ...itemForm, minimum_stock: event.target.value })
+              }
               placeholder="Stock minimo"
               required
             />
             <input
               value={itemForm.location}
-              onChange={(event) => setItemForm({ ...itemForm, location: event.target.value })}
+              onChange={(event) =>
+                setItemForm({ ...itemForm, location: event.target.value })
+              }
               placeholder="Ubicacion"
               required
             />
@@ -268,7 +281,11 @@ function App() {
                   <button type="button" onClick={() => editItem(item)}>
                     Editar
                   </button>
-                  <button type="button" className="danger" onClick={() => removeItem(item.id)}>
+                  <button
+                    type="button"
+                    className="danger"
+                    onClick={() => removeItem(item.id)}
+                  >
                     Eliminar
                   </button>
                 </div>
@@ -286,14 +303,19 @@ function App() {
           <form className="form" onSubmit={handleTicketSubmit}>
             <input
               value={ticketForm.title}
-              onChange={(event) => setTicketForm({ ...ticketForm, title: event.target.value })}
+              onChange={(event) =>
+                setTicketForm({ ...ticketForm, title: event.target.value })
+              }
               placeholder="Titulo del ticket"
               required
             />
             <textarea
               value={ticketForm.description}
               onChange={(event) =>
-                setTicketForm({ ...ticketForm, description: event.target.value })
+                setTicketForm({
+                  ...ticketForm,
+                  description: event.target.value,
+                })
               }
               placeholder="Descripcion"
               rows="4"
@@ -301,7 +323,9 @@ function App() {
             />
             <select
               value={ticketForm.priority}
-              onChange={(event) => setTicketForm({ ...ticketForm, priority: event.target.value })}
+              onChange={(event) =>
+                setTicketForm({ ...ticketForm, priority: event.target.value })
+              }
             >
               <option value="baja">Prioridad baja</option>
               <option value="media">Prioridad media</option>
@@ -309,7 +333,9 @@ function App() {
             </select>
             <select
               value={ticketForm.status}
-              onChange={(event) => setTicketForm({ ...ticketForm, status: event.target.value })}
+              onChange={(event) =>
+                setTicketForm({ ...ticketForm, status: event.target.value })
+              }
             >
               <option value="abierto">Abierto</option>
               <option value="en_proceso">En proceso</option>
@@ -318,7 +344,10 @@ function App() {
             <select
               value={ticketForm.related_item_id}
               onChange={(event) =>
-                setTicketForm({ ...ticketForm, related_item_id: event.target.value })
+                setTicketForm({
+                  ...ticketForm,
+                  related_item_id: event.target.value,
+                })
               }
             >
               <option value="">Sin producto asociado</option>
@@ -357,7 +386,9 @@ function App() {
                     Prioridad: {ticket.priority} | Estado: {ticket.status}
                   </small>
                   <br />
-                  <small>Producto relacionado: {ticket.related_item_name || "N/A"}</small>
+                  <small>
+                    Producto relacionado: {ticket.related_item_name || "N/A"}
+                  </small>
                 </div>
                 <div className="card-actions">
                   <button type="button" onClick={() => editTicket(ticket)}>
